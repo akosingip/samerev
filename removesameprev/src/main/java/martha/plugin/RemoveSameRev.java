@@ -69,9 +69,8 @@ public class RemoveSameRev extends Builder {
                                 int nextnumber = project.getLastBuild().getNumber();
                                 project.getLastBuild().delete();
                                 project.updateNextBuildNumber(nextnumber);
+                                return true;
                             }
-
-                            continue;
                         } catch (IOException ex) {
                             Logger.getLogger(RemoveSameRev.class.getName()).log(Level.SEVERE, null, ex);
                         }

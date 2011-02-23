@@ -60,12 +60,10 @@ public class SameRevTrigger extends Recorder {
             Iterator i = build.getCauses().iterator();
             while(i.hasNext()) {
                 Cause c = (Cause) i.next();
-                listener.getLogger().println(c);
                 if (c instanceof RemoteCause) {
                     Iterator it = build.getActions().iterator();
                     while (it.hasNext()) {
                         Action a = (Action) it.next();
-                        listener.getLogger().println(a);
                         if (a instanceof SameRevisionAction){
                             Hudson hudson = Hudson.getInstance();
                             AbstractProject p = hudson.getItemByFullName("SameRev", AbstractProject.class);
