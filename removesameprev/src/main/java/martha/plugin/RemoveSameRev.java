@@ -4,10 +4,9 @@ import hudson.Extension;
 import hudson.model.AbstractBuild;
 import hudson.model.BuildListener;
 import hudson.model.AbstractProject;
-import hudson.model.Action;
 import hudson.model.Hudson;
-import hudson.model.Result;
-import hudson.scm.SameRevisionAction;
+import hudson.model.ParametersAction;
+import hudson.model.StringParameterValue;
 import hudson.tasks.Builder;
 import hudson.tasks.BuildStepDescriptor;
 import java.util.logging.Level;
@@ -15,8 +14,6 @@ import java.util.logging.Logger;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import java.io.IOException;
-import java.util.Iterator;
-import java.util.List;
 import net.sf.json.JSONObject;
 import org.kohsuke.stapler.StaplerRequest;
 
@@ -56,28 +53,22 @@ public class RemoveSameRev extends Builder {
 
     @Override
     public boolean perform(AbstractBuild build, Launcher launcher, BuildListener listener) {
-        Hudson hudson = Hudson.getInstance();
-        List<AbstractProject> projects = hudson.getAllItems(AbstractProject.class);
-        for (AbstractProject project : projects) {
-            if (project.getLastFailedBuild() != null) {
-                List<Action> actions = project.getLastFailedBuild().getActions();
-                Iterator it = actions.iterator();
-                while (it.hasNext()) {
-                    if (it.next() instanceof SameRevisionAction) {
-                        try {
-                            if (project.getLastBuild().getResult().equals(Result.FAILURE)) {
-                                int nextnumber = project.getLastBuild().getNumber();
-                                project.getLastBuild().delete();
-                                project.updateNextBuildNumber(nextnumber);
-                                return true;
-                            }
-                        } catch (IOException ex) {
-                            Logger.getLogger(RemoveSameRev.class.getName()).log(Level.SEVERE, null, ex);
-                        }
-                    }
-                }
-            }
+        ParametersAction action = build.getAction(ParametersAction.class);
+
+        String failedProjectName = ((StringParameterValue)action.getParameters().get(0)).value;
+        int failedBuildNumber = Integer.parseInt(
+                ((StringParameterValue)action.getParameters().get(1)).value);
+
+        AbstractProject project = Hudson.getInstance().getItemByFullName(
+                failedProjectName, AbstractProject.class);
+
+        try {
+            project.getBuildByNumber(failedBuildNumber).delete();
+            project.updateNextBuildNumber(failedBuildNumber);
+        } catch (IOException ex) {
+            Logger.getLogger(RemoveSameRev.class.getName()).log(Level.SEVERE, null, ex);
         }
+
         return true;
     }
 

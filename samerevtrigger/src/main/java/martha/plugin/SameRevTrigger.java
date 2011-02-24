@@ -10,13 +10,17 @@ import hudson.model.Cause;
 import hudson.model.Cause.RemoteCause;
 import hudson.model.CauseAction;
 import hudson.model.Hudson;
+import hudson.model.ParametersAction;
 import hudson.model.Result;
+import hudson.model.StringParameterValue;
 import hudson.scm.SameRevisionAction;
 import hudson.tasks.Builder;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Publisher;
 import hudson.tasks.Recorder;
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import net.sf.json.JSONObject;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.StaplerRequest;
@@ -63,7 +67,10 @@ public class SameRevTrigger extends Recorder {
                 if (build.getAction(SameRevisionAction.class) != null) {
                     Hudson hudson = Hudson.getInstance();
                     AbstractProject p = hudson.getItemByFullName("SameRev", AbstractProject.class);
-                    p.scheduleBuild(null);
+                    List values = new ArrayList();
+                    values.add(new StringParameterValue("FailedProject", build.getProject().getDisplayName()));
+                    values.add(new StringParameterValue("FailedBuildNumber", Integer.toString(build.getNumber())));
+                    p.scheduleBuild(1, null, new ParametersAction(values));
                     return true;
                 }
             }
