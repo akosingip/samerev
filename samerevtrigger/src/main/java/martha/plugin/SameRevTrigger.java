@@ -8,6 +8,7 @@ import hudson.model.AbstractProject;
 import hudson.model.Action;
 import hudson.model.Cause;
 import hudson.model.Cause.RemoteCause;
+import hudson.model.CauseAction;
 import hudson.model.Hudson;
 import hudson.model.Result;
 import hudson.scm.SameRevisionAction;
@@ -57,20 +58,13 @@ public class SameRevTrigger extends Recorder {
     @Override
     public boolean perform(AbstractBuild build, Launcher launcher, BuildListener listener) {
         if (build.getResult().equals(Result.FAILURE)) {
-            Iterator i = build.getCauses().iterator();
-            while(i.hasNext()) {
-                Cause c = (Cause) i.next();
-                if (c instanceof RemoteCause) {
-                    Iterator it = build.getActions().iterator();
-                    while (it.hasNext()) {
-                        Action a = (Action) it.next();
-                        if (a instanceof SameRevisionAction){
-                            Hudson hudson = Hudson.getInstance();
-                            AbstractProject p = hudson.getItemByFullName("SameRev", AbstractProject.class);
-                            p.scheduleBuild(null);
-                            return true;
-                        }
-                    }
+            CauseAction causeaction = build.getAction(CauseAction.class);
+            if (causeaction.getCauses().iterator().next() instanceof RemoteCause) {
+                if (build.getAction(SameRevisionAction.class) != null) {
+                    Hudson hudson = Hudson.getInstance();
+                    AbstractProject p = hudson.getItemByFullName("SameRev", AbstractProject.class);
+                    p.scheduleBuild(null);
+                    return true;
                 }
             }
         }
